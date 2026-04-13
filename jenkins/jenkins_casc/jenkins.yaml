@@ -1,0 +1,67 @@
+jenkins:
+  systemMessage: "Jenkins CI dla projektu LocalAI + Backend + Frontend"
+  numExecutors: 2
+  securityRealm:
+    local:
+      allowsSignup: false
+      users:
+        - id: "admin"
+          password: "admin"
+  authorizationStrategy:
+    loggedInUsersCanDoAnything:
+      allowAnonymousRead: false
+
+tool:
+  maven:
+    installations:
+      - name: "MAVEN_3"
+        home: "/usr/share/maven"
+
+unclassified:
+  location:
+    url: "http://localhost:8081/"
+
+jobs:
+  - script: |
+      pipelineJob('testapp-job') {
+        description('Runs tests for testapp and generates JUnit and JaCoCo reports')
+        definition {
+          cps {
+            script("""
+              pipeline {
+                agent any
+
+                stages {
+                  stage('Test testapp') {
+                    steps {
+                      dir('testapp') {
+                        sh 'mvn -B clean test jacoco:report -Dmaven.repo.local=/root/.m2/repository'
+                        sh 'mkdir -p /reports/jacoco/'
+                        sh 'cp target/site/jacoco/*.xml /reports/jacoco/'
+                        sh 'mkdir -p /reports/junit/'
+                        sh 'cp target/surefire-reports/*.xml /reports/junit/'
+                      }
+                    }
+                  }
+
+                  stage('POST Backend') {
+                    steps {
+                      sh 'curl -X POST http://backend:8080/api/jenkins_post'
+                    }
+                  }
+                }
+
+                post {
+                  failure {
+                    echo 'BŁĄD! Testy nie przeszły lub wystąpił problem z pipeline.'
+                  }
+                  success {
+                    echo 'Testy zakończone sukcesem! Raporty wygenerowane.'
+                  }
+                }
+              }
+            """)
+            sandbox()
+          }
+        }
+      }

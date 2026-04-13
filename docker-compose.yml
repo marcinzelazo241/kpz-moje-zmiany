@@ -1,0 +1,137 @@
+services:
+  # 1. MongoDB
+  mongodb:
+    image: mongo:8.2.5
+    container_name: projekt_mongo
+    restart: always
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+      - ./mongod.conf:/etc/mongod.conf
+    networks:
+      - projekt_network
+    command: ["--config", "/etc/mongod.conf"]
+    healthcheck:
+      test: ["CMD-SHELL", "mongosh --quiet --eval 'db.runCommand({ping:1}).ok'"]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # 2. LocalAI 
+  local-ai:
+    image: localai/localai:v3.12.1
+    container_name: projekt_ai
+    restart: always
+    ports:
+     - "8080:8080"
+    environment:
+      - MODELS_PATH=/models
+      - BACKENDS_PATH=/backends
+      - DEBUG=false
+      - LOCALAI_LOG_LEVEL=error
+    volumes:
+      - ./localai/models:/models
+      - ./localai/backends:/backends
+    networks:
+      - projekt_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/readyz"]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # 3. Jenkins
+  jenkins:
+    build: ./jenkins
+    container_name: projekt_jenkins
+    privileged: true
+    user: root
+    restart: always
+    ports:
+      - "8081:8080"
+      - "50000:50000"
+    volumes:
+      #- jenkins_data:/var/jenkins_home
+      - maven_cache:/root/.m2
+      - ./jenkins/plugins:/var/jenkins_home/plugins
+      - ./jenkins/logging.properties:/var/jenkins_home/logging.properties
+      - ./jenkins/jenkins_casc:/var/jenkins_home/casc_configs
+      - ./testapp:/var/jenkins_home/workspace/testapp-job/testapp:cached
+      - test_reports:/reports
+    environment:
+      - CASC_JENKINS_CONFIG=/var/jenkins_home/casc_configs/jenkins.yaml
+      - JAVA_OPTS=-Djava.util.logging.config.file=/var/jenkins_home/logging.properties
+    networks:
+      - projekt_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/login"]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # 4. Backend
+  backend:
+    build: ./backend
+    container_name: projekt_backend
+    restart: on-failure
+    ports:
+      - "8082:8080"
+      - "5005:5005"
+    environment:
+      - JAVA_TOOL_OPTIONS=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005
+      - SPRING_DATA_MONGODB_URI=mongodb://mongodb:27017/appdb
+      - LOCAL_AI_URL=http://local-ai:8080
+      - LOGGING_LEVEL_ROOT=WARN       
+      - LOGGING_LEVEL_ORG_SPRINGFRAMEWORK=WARN
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      local-ai:
+        condition: service_healthy
+      jenkins:
+        condition: service_healthy
+    volumes:
+      - test_reports:/reports
+    working_dir:
+        /app
+    networks:
+      - projekt_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # 5. Frontend
+  frontend:
+    build: ./frontend
+    container_name: projekt_frontend
+    restart: on-failure
+    ports:
+      - "8083:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - projekt_network
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:80/"]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+networks:
+  projekt_network:
+    driver: bridge
+
+volumes:
+  maven_cache:
+  mongo_data:
+  #jenkins_data:
+  test_reports:

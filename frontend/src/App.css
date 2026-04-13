@@ -1,0 +1,102 @@
+/* Główne tło i czcionka */
+body {
+  margin: 0;
+  font-family: 'Inter', sans-serif;
+  background-color: #121212;
+  color: #e0e0e0;
+}
+
+.dashboard-container {
+  padding: 40px;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+/* Styl tabeli */
+.table-wrapper {
+  background: #1e1e1e;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+  overflow: hidden;
+}
+
+.job-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.job-table th {
+  background: #252525;
+  padding: 15px;
+  text-align: left;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  color: #888;
+}
+
+.job-table td {
+  padding: 15px;
+  border-bottom: 1px solid #333;
+}
+
+/* Kropki statusu */
+.status-dot {
+  height: 10px;
+  width: 10px;
+  border-radius: 50%;
+  display: inline-block;
+  margin-right: 10px;
+}
+
+.green { background: #4caf50; box-shadow: 0 0 10px #4caf50; }
+.red { background: #f44336; box-shadow: 0 0 10px #f44336; }
+
+.status-text { font-size: 0.85rem; font-weight: bold; }
+
+/* Przyciski */
+.run-btn {
+  background: #007bff;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: 0.2s;
+}
+
+.run-btn:hover {
+  background: #0056b3;
+  transform: translateY(-2px);
+}
+
+.refresh-btn {
+  background: transparent;
+  border: 1px solid #444;
+  color: #ccc;
+  padding: 8px 15px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.refresh-btn:hover { background: #333; }
+
+@keyframes shimmer {
+  0% { opacity: 0.3; }
+  50% { opacity: 1; }
+  100% { opacity: 0.3; }
+}
+
+.refresh-indicator {
+  font-size: 0.7rem;
+  color: #4caf50;
+  animation: shimmer 2s infinite;
+  margin-left: 10px;
+}
