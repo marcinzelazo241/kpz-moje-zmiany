@@ -45,7 +45,12 @@ function App() {
   return (
     <div className="dashboard-container">
       <header>
-        <h1>🚀 Flaky Test & Coverage Coach {loading && <span className="refresh-indicator"> ● SYNC</span>}</h1>
+        <h1>
+  🚀 Flaky Test & Coverage Coach 
+  <span className={`refresh-indicator ${loading ? 'visible' : 'hidden'}`}>
+    ● SYNC
+  </span>
+</h1>
         <button className="refresh-btn" onClick={fetchJobs}>Odśwież ręcznie</button>
       </header>
 
