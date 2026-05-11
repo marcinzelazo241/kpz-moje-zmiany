@@ -95,8 +95,17 @@ header {
 }
 
 .refresh-indicator {
-  font-size: 0.7rem;
-  color: #4caf50;
-  animation: shimmer 2s infinite;
-  margin-left: 10px;
+  margin-left: 15px;
+  font-size: 0.5em;
+  color: #00ff88;
+  vertical-align: middle;
+  transition: opacity 0.3s ease; /* Płynne pojawianie się */
+}
+
+.refresh-indicator.hidden {
+  opacity: 0; /* Napis tam jest, ale go nie widać */
+}
+
+.refresh-indicator.visible {
+  opacity: 1;
 }
